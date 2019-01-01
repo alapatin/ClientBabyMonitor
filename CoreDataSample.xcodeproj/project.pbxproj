@@ -10,9 +10,9 @@
 		D056829921D69EE600ADC86E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D056829821D69EE600ADC86E /* AppDelegate.swift */; };
 		D056829B21D69EE600ADC86E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D056829A21D69EE600ADC86E /* ViewController.swift */; };
 		D056829E21D69EE600ADC86E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D056829C21D69EE600ADC86E /* Main.storyboard */; };
-		D05682A121D69EE600ADC86E /* CoreDataSample.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = D056829F21D69EE600ADC86E /* CoreDataSample.xcdatamodeld */; };
 		D05682A321D69EEA00ADC86E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D05682A221D69EEA00ADC86E /* Assets.xcassets */; };
 		D05682A621D69EEA00ADC86E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D05682A421D69EEA00ADC86E /* LaunchScreen.storyboard */; };
+		D05682EE21D9220400ADC86E /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = D05682ED21D9220400ADC86E /* Client.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,10 +20,10 @@
 		D056829821D69EE600ADC86E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D056829A21D69EE600ADC86E /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		D056829D21D69EE600ADC86E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		D05682A021D69EE600ADC86E /* CoreDataSample.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CoreDataSample.xcdatamodel; sourceTree = "<group>"; };
 		D05682A221D69EEA00ADC86E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D05682A521D69EEA00ADC86E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D05682A721D69EEA00ADC86E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D05682ED21D9220400ADC86E /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,11 +58,11 @@
 			children = (
 				D056829821D69EE600ADC86E /* AppDelegate.swift */,
 				D056829A21D69EE600ADC86E /* ViewController.swift */,
+				D05682ED21D9220400ADC86E /* Client.swift */,
 				D056829C21D69EE600ADC86E /* Main.storyboard */,
 				D05682A221D69EEA00ADC86E /* Assets.xcassets */,
 				D05682A421D69EEA00ADC86E /* LaunchScreen.storyboard */,
 				D05682A721D69EEA00ADC86E /* Info.plist */,
-				D056829F21D69EE600ADC86E /* CoreDataSample.xcdatamodeld */,
 			);
 			path = CoreDataSample;
 			sourceTree = "<group>";
@@ -139,8 +139,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				D056829B21D69EE600ADC86E /* ViewController.swift in Sources */,
-				D05682A121D69EE600ADC86E /* CoreDataSample.xcdatamodeld in Sources */,
 				D056829921D69EE600ADC86E /* AppDelegate.swift in Sources */,
+				D05682EE21D9220400ADC86E /* Client.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -340,19 +340,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCVersionGroup section */
-		D056829F21D69EE600ADC86E /* CoreDataSample.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				D05682A021D69EE600ADC86E /* CoreDataSample.xcdatamodel */,
-			);
-			currentVersion = D05682A021D69EE600ADC86E /* CoreDataSample.xcdatamodel */;
-			path = CoreDataSample.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
 	};
 	rootObject = D056828D21D69EE600ADC86E /* Project object */;
 }
