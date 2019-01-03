@@ -70,6 +70,7 @@ class ViewController: UIViewController {
         // Add Output to Session
         
         let sessionOutput = AVCaptureVideoDataOutput()
+        
         sessionOutput.alwaysDiscardsLateVideoFrames = true
         let queue = DispatchQueue.main
         sessionOutput.setSampleBufferDelegate(self, queue: queue)
@@ -116,8 +117,8 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        self.t += 1
-        print(t)
+//        self.t += 1
+//        print(t)
         
         if CMSampleBufferDataIsReady(sampleBuffer) {
             self.i += 1

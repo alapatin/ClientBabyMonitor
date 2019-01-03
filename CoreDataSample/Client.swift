@@ -118,7 +118,8 @@ class TCPClient: NSObject {
         
         
         let bufferData = bufferToUInt(sampleBuffer: frame)
-//        print(bufferData)
+        
+//        print(bufferData.count)
         self.outputStream?.write(bufferData, maxLength: bufferData.count)
         
 //        let pointer = frame!.pointee
@@ -130,10 +131,19 @@ class TCPClient: NSObject {
     private func bufferToUInt(sampleBuffer: CMSampleBuffer) -> [UInt8] {
         let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
         
+        print(CMSampleBufferGetDuration(sampleBuffer))
+        print(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+        
         CVPixelBufferLockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         let byterPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
         let height = CVPixelBufferGetHeight(imageBuffer)
+        let width = CVPixelBufferGetWidth(imageBuffer)
+        let format = CVPixelBufferGetPixelFormatType(imageBuffer)
+        
         let srcBuff = CVPixelBufferGetBaseAddress(imageBuffer)
+        
+        print(OSType(format))
+//        print("w: \(width), h: \(height), bpr: \(byterPerRow)")
         
         let data = NSData(bytes: srcBuff, length: byterPerRow * height)
         CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
