@@ -63,21 +63,14 @@ class TCPClient: NSObject {
             return print("streams already opened... \(self.openedStreams)")
         }
         
-        
         self.inputStream?.schedule(in: .current, forMode: .default)
         self.inputStream?.open()
         
-        
         self.outputStream?.schedule(in: .current, forMode: .default)
         self.outputStream?.open()
-        
-        //        let data = "Hello".data(using: .utf8)!
-        //        var bytesWritten = data.withUnsafeBytes { self.outputStream?.write($0, maxLength: data.count) }
-        
+   
         print("Open streams")
-        
-        
-    }
+        }
     
     func closeStreams() {
         self.inputStream?.remove(from: .current, forMode: .default)
@@ -93,62 +86,31 @@ class TCPClient: NSObject {
     }
     
     func send() {
-        //        guard self.openedStreams == 2 else {
-        //            return print("no open streams \(self.openedStreams)")
-        //        }
-        //
-        //        guard self.outputStream!.hasSpaceAvailable else {
-        //            return print("no space available")
-        //        }
-        
+
         let data = "Hello, World".data(using: .utf8)!
-        
-        let bytesWritten = data.withUnsafeBytes { self.outputStream?.write($0, maxLength: data.count) }
-        
-        //        guard bytesWritten == data.count else {
-        //            self.closeStreams()
-        //            print("something is wrong...")
-        //            return
-        //        }
-        //        print("data written... \(message)")
+        let _ = data.withUnsafeBytes { self.outputStream?.write($0, maxLength: data.count) }
     }
     
     
     func sendVideoFrames (frame: CMSampleBuffer){
         
-        
         let bufferData = bufferToUInt(sampleBuffer: frame)
-        
-//        print(bufferData.count)
         self.outputStream?.write(bufferData, maxLength: bufferData.count)
-        
-//        let pointer = frame!.pointee
-//        let str = String(cString: pointer!)
-//        let data = str.data(using: .utf8)!
-//        let bytesWritten = data.withUnsafeBytes { self.outputStream?.write($0, maxLength: data.count) }
     }
     
     private func bufferToUInt(sampleBuffer: CMSampleBuffer) -> [UInt8] {
+        
         let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
-        
-        print(CMSampleBufferGetDuration(sampleBuffer))
-        print(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
-        
         CVPixelBufferLockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         let byterPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
         let height = CVPixelBufferGetHeight(imageBuffer)
-        let width = CVPixelBufferGetWidth(imageBuffer)
-        let format = CVPixelBufferGetPixelFormatType(imageBuffer)
-        
+//        let format = CVPixelBufferGetPixelFormatType(imageBuffer)
+//        let width = CVPixelBufferGetWidth(imageBuffer)
+//        let duration = CMSampleBufferGetDuration(sampleBuffer)
+//        let timeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         let srcBuff = CVPixelBufferGetBaseAddress(imageBuffer)
-        
-        print(OSType(format))
-//        print("w: \(width), h: \(height), bpr: \(byterPerRow)")
-        
         let data = NSData(bytes: srcBuff, length: byterPerRow * height)
         CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
-        
-//        return [UInt8].init(repeating: 0, count: data.length / MemoryLayout<UInt8>.size)
         return [UInt8](data as Data)
     }
 }
@@ -177,33 +139,3 @@ extension TCPClient: NetServiceBrowserDelegate {
         }
     }
 }
-
-//extension TCPClient: StreamDelegate {
-//
-//    func stream(aStream: Stream, handleEvent eventCode: Stream.Event) {
-//        if eventCode.contains(.openCompleted) {
-//            self.openedStreams += 1
-//            print("Opened streams: \(openedStreams)")
-//
-//        }
-//        if eventCode.contains(.hasSpaceAvailable) {
-//            if self.openedStreams == 2 && !self.streamsConnected {
-//                print("streams connected.")
-//                self.streamsConnected = true
-//                self.streamsConnectedCallback?()
-//            }
-//        }
-//    }
-//}
-//
-//extension TCPClient: NetServiceDelegate {
-//
-//    func netServiceDidResolveAddress(_ sender: NetService) {
-//        print("Did resolved addres")
-//    }
-//
-//    func netService(_ sender: NetService, didNotResolve errorDict: [String : NSNumber]) {
-//        print("Didn't resolved")
-//    }
-//
-//}
