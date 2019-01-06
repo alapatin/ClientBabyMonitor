@@ -73,6 +73,7 @@ class TCPClient: NSObject {
         }
     
     func closeStreams() {
+        print("close stream")
         self.inputStream?.remove(from: .current, forMode: .default)
         self.inputStream?.close()
         self.inputStream = nil
@@ -92,10 +93,12 @@ class TCPClient: NSObject {
     }
     
     
-    func sendVideoFrames (frame: CMSampleBuffer){
-        
-        let bufferData = bufferToUInt(sampleBuffer: frame)
-        self.outputStream?.write(bufferData, maxLength: bufferData.count)
+    func sendVideoFrames (frame: NSMutableData){
+//        print("send video")
+//        let bufferData = bufferToUInt(sampleBuffer: frame)
+        let bytes = [UInt8](frame as Data)
+        print(" Bytes count: \(bytes.count)")
+        self.outputStream?.write(bytes, maxLength: bytes.count)
     }
     
     private func bufferToUInt(sampleBuffer: CMSampleBuffer) -> [UInt8] {
