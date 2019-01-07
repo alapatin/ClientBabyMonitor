@@ -23,7 +23,14 @@ class ViewController: UIViewController {
     var outputCallbackCompression: VTCompressionOutputCallback?
 //    let pointerCompression: UnsafeMutablePointer<VTCompressionSession?>? = nil
     
+    var sampleBufferTest: CMSampleBuffer?
+    let videoPreviewView = AVSampleBufferDisplayLayer()
+    
     @IBOutlet weak var previewView: UIView!
+    
+    
+        
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -78,137 +85,42 @@ class ViewController: UIViewController {
         captureSession.addOutput(sessionOutput)
         
         
-        let videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        videoPreviewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        videoPreviewLayer.frame = view.layer.bounds
-        previewView.layer.addSublayer(videoPreviewLayer)
+//        let videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+//        videoPreviewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
+//        videoPreviewLayer.frame = view.layer.bounds
+//        previewView.layer.addSublayer(videoPreviewLayer)
+        
         captureSession.startRunning()
         
         
-        func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
-                         sourceFrameRefCon: UnsafeMutableRawPointer?,
-                         status: OSStatus,
-                         infoFlags: VTEncodeInfoFlags,
-                         sampleBuffer: CMSampleBuffer?) -> Void {
-
-            if status != noErr {
-                print("Error: Callback processing status error")
-            }
-            
-            let elementaryStream = NSMutableData()
- 
-            var isIFrame = false
-            guard let sampleBuffer = sampleBuffer else {
-                print("Error: In callback processing sampleBuffer = nil")
-                return
-            }
-            let attachmentArray: CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false)!
-            
-            if (CFArrayGetCount(attachmentArray) > 0) {
-//                var notSync: CFBoolean?
-                let dict = CFArrayGetValueAtIndex(attachmentArray, 0)
-                let dictCF: CFDictionary = unsafeBitCast(dict, to: CFDictionary.self)
-//                let keyNotSync: UnsafeMutablePointer = kCMSampleAttachmentKey_NotSync
-                let value = CFDictionaryGetValue(dictCF, unsafeBitCast(kCMSampleAttachmentKey_NotSync, to: UnsafeRawPointer.self))
-                
-                if ( value != nil ){
-                    print ("IFrame found...")
-                    isIFrame = true
-                }
-            }
-            
-            //2. define the start code
-            let nStartCodeLength:size_t = 4
-            let nStartCode:[UInt8] = [0x00, 0x00, 0x00, 0x01]
-            
-            //3. write the SPS and PPS before I-frame
-            if ( isIFrame == true ){
-                let description: CMFormatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
-                //how many params
-                var numberOfParametersSets: size_t = 0
-                CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description,
-                                                                   parameterSetIndex: 0,
-                                                                   parameterSetPointerOut: nil,
-                                                                   parameterSetSizeOut: nil,
-                                                                   parameterSetCountOut: &numberOfParametersSets,
-                                                                   nalUnitHeaderLengthOut: nil)
-                
-                //write each param-set to elementary stream
-                print("Write param to elementaryStream ", numberOfParametersSets)
-                
-                for i in 0..<numberOfParametersSets {
-                    var parameterSetPointer: UnsafePointer<UInt8>?
-                    var parameterSetLength: size_t = 0
-                    
-// ???
-                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description,
-                                                                       parameterSetIndex: i,
-                                                                       parameterSetPointerOut: &parameterSetPointer,
-                                                                       parameterSetSizeOut: &parameterSetLength,
-                                                                       parameterSetCountOut: nil,
-                                                                       nalUnitHeaderLengthOut: nil)
-                    
-                    elementaryStream.append(nStartCode, length: nStartCodeLength)
-                    elementaryStream.append(parameterSetPointer!, length: parameterSetLength)
-                }
-                
-            }
-            
-            //4. Get a pointer to the raw AVCC NAL unit data in the sample buffer
-            var blockBufferLength:size_t = 0
-            var bufferDataPointer: UnsafeMutablePointer<Int8>?
-            
-            CMBlockBufferGetDataPointer(CMSampleBufferGetDataBuffer(sampleBuffer)!,
-                                        atOffset: 0,
-                                        lengthAtOffsetOut: nil,
-                                        totalLengthOut: &blockBufferLength,
-                                        dataPointerOut: &bufferDataPointer)
-            
-            print ("Block length = ", blockBufferLength)
-            
-            //5. Loop through all the NAL units in the block buffer
-            var bufferOffset:size_t = 0
-            let AVCCHeaderLength:Int = 4
-            
-            while (bufferOffset < (blockBufferLength - AVCCHeaderLength) ) {
-                // Read the NAL unit length
-                var NALUnitLength:UInt32 =  0
-            
-                guard let bufferDataPointer = bufferDataPointer else {
-                    print("Error: Read NAL unit bufferDataPoint = nil")
-                    return
-                }
-                
-                memcpy(&NALUnitLength, bufferDataPointer + bufferOffset, AVCCHeaderLength)
-                //Big-Endian to Little-Endian
-                NALUnitLength = CFSwapInt32(NALUnitLength)
-                if ( NALUnitLength > 0 ){
-                    print ( "NALUnitLen = ", NALUnitLength)
-                    // Write start code to the elementary stream
-                    elementaryStream.append(nStartCode, length: nStartCodeLength)
-                    // Write the NAL unit without the AVCC length header to the elementary stream
-                    elementaryStream.append(bufferDataPointer + bufferOffset + AVCCHeaderLength, length: Int(NALUnitLength))
-                    // Move to the next NAL unit in the block buffer
-                    bufferOffset += AVCCHeaderLength + size_t(NALUnitLength);
-                    print("Moving to next NALU...")
-                }
-            }
-            print("Read completed...")
-             TCPClient.shared.sendVideoFrames(frame: elementaryStream)
-        }
-
-        self.outputCallbackCompression = outputCallbackProcessing(outputCallbackRefCon:sourceFrameRefCon:status:infoFlags:sampleBuffer:)
+        
+        videoPreviewView.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        videoPreviewView.frame = view.layer.bounds
         
         
-//        outputCallbackCompression = {outputCallbackRefCon, sourceFrameRefCon, status, infoFlags, sampleBuffer in
-//
-//        }
+        previewView.layer.addSublayer(videoPreviewView)
+        
+        
+        
+       // end did load
     }
+    
+    
+    
+    
 }
 
 extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        
+        if (videoPreviewView.isReadyForMoreMediaData){
+            videoPreviewView.enqueue(sampleBuffer)
+            DispatchQueue.main.async(execute: {
+                self.videoPreviewView.setNeedsDisplay()
+            })
+        }
+        
         
 // Add Compression Session
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
@@ -225,7 +137,7 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
                                                                   encoderSpecification: nil,
                                                                   imageBufferAttributes: nil,
                                                                   compressedDataAllocator: nil,
-                                                                  outputCallback: self.outputCallbackCompression,
+                                                                  outputCallback: outputCallbackProcessing,
                                                                   refcon: nil,
                                                                   compressionSessionOut: &self.compressionSession)
         
@@ -233,9 +145,26 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             VTSessionSetProperty(self.compressionSession,
                                  key: kVTCompressionPropertyKey_RealTime,
                                  value: kCFBooleanTrue)
+            
+//            // set profile to Main
+//            VTSessionSetProperty(self.compressionSession,
+//                                 key: kVTCompressionPropertyKey_ProfileLevel,
+//                                 value: kVTProfileLevel_H264_Main_AutoLevel)
+//            // 关键帧间隔
+//            VTSessionSetProperty(self.compressionSession,
+//                                 key: kVTCompressionPropertyKey_MaxKeyFrameInterval,
+//                                 value: 10 as CFTypeRef)
+//            // 比特率和速率
+//            VTSessionSetProperty(self.compressionSession,
+//                                 key: kVTCompressionPropertyKey_AverageBitRate,
+//                                 value:  imageWidth * imageHeight * 2 * 32 as CFTypeRef)
+//            VTSessionSetProperty(self.compressionSession,
+//                                 key: kVTCompressionPropertyKey_DataRateLimits,
+//                                 value: [imageWidth * imageHeight * 2 * 4, 1] as CFArray)
+            
         } else { print("Can't create compression session")}
         
-//        let presentationTimeStamp = CMTime(value: 20, timescale: 30)
+//        let timeStamp = CMTime(value: 20, timescale: 30)
         let timeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         let duration = CMSampleBufferGetDuration(sampleBuffer)
         
@@ -266,5 +195,138 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     
+}
+
+
+
+func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
+                               sourceFrameRefCon: UnsafeMutableRawPointer?,
+                               status: OSStatus,
+                               infoFlags: VTEncodeInfoFlags,
+                               sampleBuffer: CMSampleBuffer?) -> Void {
+    
+    if status != noErr {
+        print("Error: Callback processing status error")
+    }
+    
+    let elementaryStream = NSMutableData()
+    
+    var isIFrame = false
+    guard let sampleBuffer = sampleBuffer else {
+        print("Error: In callback processing sampleBuffer = nil")
+        return
+    }
+    
+    if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
+                                                                 createIfNecessary: true) {
+        print("attachments: \(attachments)")
+
+        let rawDic: UnsafeRawPointer = CFArrayGetValueAtIndex(attachments, 0)
+        let dic: CFDictionary = Unmanaged.fromOpaque(rawDic).takeUnretainedValue()
+
+        // if not contains means it's an IDR frame
+        let keyFrame = !CFDictionaryContainsKey(dic, Unmanaged.passUnretained(kCMSampleAttachmentKey_NotSync).toOpaque())
+        if keyFrame {
+            print("IDR frame")
+    
+//    let attachmentArray: CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
+//                                                                           createIfNecessary: true)!
+//    print(attachmentArray)
+//    if (CFArrayGetCount(attachmentArray) > 0) {
+//        //                var notSync: CFBoolean?
+//        let dict = unsafeBitCast(CFArrayGetValueAtIndex(attachmentArray, 0),
+//                                 to: CFMutableDictionary.self)
+//        let key = Unmanaged.passUnretained(kCMSampleAttachmentKey_NotSync).toOpaque()
+//        //                let value = Unmanaged.passUnretained(kCFBooleanTrue).toOpaque()
+//        let value = CFDictionaryGetValue(dict, key)
+//
+//        if ( value != nil ){
+//            print ("IFrame found...")
+            isIFrame = true
+        }
+    } else {print("non IDR frame")}
+    
+    //2. define the start code
+    let nStartCodeLength:size_t = 4
+    let nStartCode:[UInt8] = [0x00, 0x00, 0x00, 0x01]
+    
+    //3. write the SPS and PPS before I-frame
+    if ( isIFrame == true ){
+        let description: CMFormatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
+        //how many params
+        var numberOfParametersSets: size_t = 0
+        CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description,
+                                                           parameterSetIndex: 0,
+                                                           parameterSetPointerOut: nil,
+                                                           parameterSetSizeOut: nil,
+                                                           parameterSetCountOut: &numberOfParametersSets,
+                                                           nalUnitHeaderLengthOut: nil)
+        
+        
+        
+        //write each param-set to elementary stream
+        print("Write param to elementaryStream ", numberOfParametersSets)
+        
+        for i in 0..<numberOfParametersSets {
+            var parameterSetPointer: UnsafePointer<UInt8>?
+            var parameterSetLength: size_t = 0
+            
+            // ???
+            CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description,
+                                                               parameterSetIndex: i,
+                                                               parameterSetPointerOut: &parameterSetPointer,
+                                                               parameterSetSizeOut: &parameterSetLength,
+                                                               parameterSetCountOut: nil,
+                                                               nalUnitHeaderLengthOut: nil)
+            
+            elementaryStream.append(nStartCode, length: nStartCodeLength)
+            elementaryStream.append(parameterSetPointer!, length: parameterSetLength)
+        }
+        
+    }
+    
+    //4. Get a pointer to the raw AVCC NAL unit data in the sample buffer
+    var blockBufferLength:size_t = 0
+    var bufferDataPointer: UnsafeMutablePointer<Int8>?
+    
+    CMBlockBufferGetDataPointer(CMSampleBufferGetDataBuffer(sampleBuffer)!,
+                                atOffset: 0,
+                                lengthAtOffsetOut: nil,
+                                totalLengthOut: &blockBufferLength,
+                                dataPointerOut: &bufferDataPointer)
+    
+    print ("Block length = ", blockBufferLength)
+    
+    //5. Loop through all the NAL units in the block buffer
+    var bufferOffset:size_t = 0
+    let AVCCHeaderLength:Int = 4
+    
+    while (bufferOffset < (blockBufferLength - AVCCHeaderLength) ) {
+        // Read the NAL unit length
+        var NALUnitLength:UInt32 =  0
+        
+        guard let bufferDataPointer = bufferDataPointer else {
+            print("Error: Read NAL unit bufferDataPoint = nil")
+            return
+        }
+//////////
+        memcpy(&NALUnitLength, bufferDataPointer + bufferOffset, AVCCHeaderLength)
+        
+        
+        //Big-Endian to Little-Endian
+        NALUnitLength = CFSwapInt32(NALUnitLength)
+        if ( NALUnitLength > 0 ){
+            print ( "NALUnitLen = ", NALUnitLength)
+            // Write start code to the elementary stream
+            elementaryStream.append(nStartCode, length: nStartCodeLength)
+            // Write the NAL unit without the AVCC length header to the elementary stream
+            elementaryStream.append(bufferDataPointer + bufferOffset + AVCCHeaderLength, length: Int(NALUnitLength))
+            // Move to the next NAL unit in the block buffer
+            bufferOffset += AVCCHeaderLength + size_t(NALUnitLength);
+            print("Moving to next NALU...")
+        }
+    }
+    print("Read completed...")
+    TCPClient.shared.sendVideoFrames(frame: elementaryStream)
 }
 
