@@ -10,7 +10,6 @@ import UIKit
 import AVFoundation
 import VideoToolbox
 
-
 class ViewController: UIViewController {
     
     var captureSession: AVCaptureSession!
@@ -27,11 +26,7 @@ class ViewController: UIViewController {
     let videoPreviewView = AVSampleBufferDisplayLayer()
     
     @IBOutlet weak var previewView: UIView!
-    
-    
-        
-    
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -50,7 +45,6 @@ class ViewController: UIViewController {
         }
         
         let captureDevice = bestDevice(in: .back)
-        
         
         // Create Session
         
@@ -84,43 +78,18 @@ class ViewController: UIViewController {
         guard captureSession.canAddOutput(sessionOutput) else {fatalError()}
         captureSession.addOutput(sessionOutput)
         
-        
-//        let videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-//        videoPreviewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
-//        videoPreviewLayer.frame = view.layer.bounds
-//        previewView.layer.addSublayer(videoPreviewLayer)
+        let videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        videoPreviewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        videoPreviewLayer.frame = view.layer.bounds
+        previewView.layer.addSublayer(videoPreviewLayer)
         
         captureSession.startRunning()
-        
-        
-        
-        videoPreviewView.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        videoPreviewView.frame = view.layer.bounds
-        
-        
-        previewView.layer.addSublayer(videoPreviewView)
-        
-        
-        
-       // end did load
     }
-    
-    
-    
-    
 }
 
 extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
-        if (videoPreviewView.isReadyForMoreMediaData){
-            videoPreviewView.enqueue(sampleBuffer)
-            DispatchQueue.main.async(execute: {
-                self.videoPreviewView.setNeedsDisplay()
-            })
-        }
-        
         
 // Add Compression Session
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
@@ -145,29 +114,10 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             VTSessionSetProperty(self.compressionSession,
                                  key: kVTCompressionPropertyKey_RealTime,
                                  value: kCFBooleanTrue)
-            
-//            // set profile to Main
-//            VTSessionSetProperty(self.compressionSession,
-//                                 key: kVTCompressionPropertyKey_ProfileLevel,
-//                                 value: kVTProfileLevel_H264_Main_AutoLevel)
-//            // 关键帧间隔
-//            VTSessionSetProperty(self.compressionSession,
-//                                 key: kVTCompressionPropertyKey_MaxKeyFrameInterval,
-//                                 value: 10 as CFTypeRef)
-//            // 比特率和速率
-//            VTSessionSetProperty(self.compressionSession,
-//                                 key: kVTCompressionPropertyKey_AverageBitRate,
-//                                 value:  imageWidth * imageHeight * 2 * 32 as CFTypeRef)
-//            VTSessionSetProperty(self.compressionSession,
-//                                 key: kVTCompressionPropertyKey_DataRateLimits,
-//                                 value: [imageWidth * imageHeight * 2 * 4, 1] as CFArray)
-            
         } else { print("Can't create compression session")}
         
-//        let timeStamp = CMTime(value: 20, timescale: 30)
         let timeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         let duration = CMSampleBufferGetDuration(sampleBuffer)
-        
         
         let statusEncodFrame = VTCompressionSessionEncodeFrame(self.compressionSession,
                                         imageBuffer: imageBuffer,
@@ -187,17 +137,8 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         
         VTCompressionSessionInvalidate(self.compressionSession)
-   
-//        if CMSampleBufferDataIsReady(sampleBuffer) {
-//            TCPClient.shared.sendVideoFrames(frame: sampleBuffer)
-//            //            TCPClient.shared.send()
-//        }
     }
-    
-    
 }
-
-
 
 func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
                                sourceFrameRefCon: UnsafeMutableRawPointer?,
@@ -228,20 +169,6 @@ func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
         let keyFrame = !CFDictionaryContainsKey(dic, Unmanaged.passUnretained(kCMSampleAttachmentKey_NotSync).toOpaque())
         if keyFrame {
             print("IDR frame")
-    
-//    let attachmentArray: CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
-//                                                                           createIfNecessary: true)!
-//    print(attachmentArray)
-//    if (CFArrayGetCount(attachmentArray) > 0) {
-//        //                var notSync: CFBoolean?
-//        let dict = unsafeBitCast(CFArrayGetValueAtIndex(attachmentArray, 0),
-//                                 to: CFMutableDictionary.self)
-//        let key = Unmanaged.passUnretained(kCMSampleAttachmentKey_NotSync).toOpaque()
-//        //                let value = Unmanaged.passUnretained(kCFBooleanTrue).toOpaque()
-//        let value = CFDictionaryGetValue(dict, key)
-//
-//        if ( value != nil ){
-//            print ("IFrame found...")
             isIFrame = true
         }
     } else {print("non IDR frame")}
@@ -309,7 +236,7 @@ func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
             print("Error: Read NAL unit bufferDataPoint = nil")
             return
         }
-//////////
+
         memcpy(&NALUnitLength, bufferDataPointer + bufferOffset, AVCCHeaderLength)
         
         
