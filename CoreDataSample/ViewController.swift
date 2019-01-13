@@ -25,6 +25,8 @@ class ViewController: UIViewController {
     var sampleBufferTest: CMSampleBuffer?
     let videoPreviewView = AVSampleBufferDisplayLayer()
     
+    
+    
     @IBOutlet weak var previewView: UIView!
 
     override func viewDidLoad() {
@@ -90,6 +92,12 @@ class ViewController: UIViewController {
 extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        
+        connection.videoOrientation = AVCaptureVideoOrientation.portrait
+        
+        guard TCPClient.shared.isServerReady else {
+            return
+        }
         
 // Add Compression Session
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
@@ -160,7 +168,7 @@ func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
     
     if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer,
                                                                  createIfNecessary: true) {
-        print("attachments: \(attachments)")
+//        print("attachments: \(attachments)")
 
         let rawDic: UnsafeRawPointer = CFArrayGetValueAtIndex(attachments, 0)
         let dic: CFDictionary = Unmanaged.fromOpaque(rawDic).takeUnretainedValue()
@@ -208,6 +216,7 @@ func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
             
             elementaryStream.append(nStartCode, length: nStartCodeLength)
             elementaryStream.append(parameterSetPointer!, length: parameterSetLength)
+            
         }
         
     }
@@ -254,6 +263,11 @@ func outputCallbackProcessing (outputCallbackRefCon: UnsafeMutableRawPointer?,
         }
     }
     print("Read completed...")
+    
+    if TCPClient.shared.isServerReady {
+        TCPClient.shared.isServerReady = false
     TCPClient.shared.sendVideoFrames(frame: elementaryStream)
+    }
+//    TCPClient.shared.elementaryStreamTransport = elementaryStream
 }
 

@@ -25,6 +25,9 @@ class TCPClient: NSObject {
     var outputStream: OutputStream?
     var openedStreams = 0
     
+    var isServerReady = true
+    var elementaryStreamTransport: NSMutableData?
+    
     static let shared = TCPClient()
     
     private override init() {
@@ -63,9 +66,11 @@ class TCPClient: NSObject {
             return print("streams already opened... \(self.openedStreams)")
         }
         
+        self.inputStream?.delegate = self
         self.inputStream?.schedule(in: .current, forMode: .default)
         self.inputStream?.open()
         
+        self.outputStream?.delegate = self
         self.outputStream?.schedule(in: .current, forMode: .default)
         self.outputStream?.open()
    
@@ -96,8 +101,10 @@ class TCPClient: NSObject {
     func sendVideoFrames (frame: NSMutableData){
 //        print("send video")
 //        let bufferData = bufferToUInt(sampleBuffer: frame)
-        let bytes = [UInt8](frame as Data)
+        var bytes = [UInt8](frame as Data)
+        print("--------------------------------")
         print(" Bytes count: \(bytes.count)")
+        print("--------------------------------")
         self.outputStream?.write(bytes, maxLength: bytes.count)
     }
     
@@ -140,5 +147,38 @@ extension TCPClient: NetServiceBrowserDelegate {
                 self.connectTo(service: service)
             }
         }
+    }
+}
+
+extension TCPClient: StreamDelegate {
+    
+    func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
+        
+        if eventCode.contains(.hasBytesAvailable) {
+            
+            guard let inputStream = self.inputStream else {
+                return print("no input stream")
+            }
+            
+            let bufferSize     = 8
+            var buffer         = Array<UInt8>(repeating: 0, count: bufferSize)
+            
+            
+            while inputStream.hasBytesAvailable {
+                var bytesFromStream = inputStream.read(&buffer, maxLength: bufferSize)
+            }
+            
+            if buffer == [0,0,1,1,0,0,1,1] {
+                print("Ready from server")
+                TCPClient.shared.isServerReady = true
+            }
+            
+        }
+        
+        
+        //        if TCPClient.shared.elementaryStreamTransport != nil {
+        //            TCPClient.shared.sendVideoFrames(frame: TCPClient.shared.elementaryStreamTransport!)
+        //        } else {print("Error: Elementary stream transport = nil")}
+        
     }
 }
